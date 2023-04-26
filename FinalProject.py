@@ -1,5 +1,4 @@
-#Michael Olsen
-#001
+#Michael Olsen, Liz Borao, Lam Dinh
 
 #import statements
 import requests
