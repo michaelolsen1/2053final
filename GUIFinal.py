@@ -1,5 +1,6 @@
-#Michael Olsen 
-#001
+#Michael Olsen, Elizabeth Borao, Lam Dinh
+#Platform Based Computing 
+#Final Exam
 
 #Import Statements___________________________________________________________________________________________________________________
 import requests
@@ -14,11 +15,11 @@ import webbrowser
 
 #API Information and Constants_______________________________________________________________________________________________________
 #For the Ratio Analysis Option
-METRICS = ['currentRatioTTM', 'quickRatioTTM', 'cashRatioTTM', 'debtEquityRatioTTM', 'netProfitMarginTTM', 'operatingProfitMarginTTM', 
-'returnOnAssetsTTM', 'returnOnEquityTTM', 'peRatioTTM', 'priceToBookRatioTTM', 'priceToSalesRatioTTM', 'enterpriseValueMultipleTTM', 
+METRICS = ['currentRatioTTM', 'quickRatioTTM', 'cashRatioTTM', 'debtEquityRatioTTM', 'netProfitMarginTTM', 'operatingProfitMarginTTM',
+'returnOnAssetsTTM', 'returnOnEquityTTM', 'peRatioTTM', 'priceToBookRatioTTM', 'priceToSalesRatioTTM', 'enterpriseValueMultipleTTM',
 'dividendYielPercentageTTM']
 
-TABLELABELS = ['Current Ratio (x)', 'Quick Ratio (x)', 'Cash Ratio (x)', 'Debt/Equity (x)', 'Net Margin', 'Operating Margin', 
+TABLELABELS = ['Current Ratio (x)', 'Quick Ratio (x)', 'Cash Ratio (x)', 'Debt/Equity (x)', 'Net Margin', 'Operating Margin',
 'Return on Assets', 'Return on Equity', 'P/E (x)', 'Price/Book (x)', 'Price/Sales (x)', 'EV/EBITDA (x)', 'Dividend Yield (%)']
 
 #Stock Overview API
@@ -68,6 +69,7 @@ def enterStock(stock):
     stockOverview = getURLdata(alphaURL, overopts)
     try:
         clearframe(g)
+        clearframe(p)
         clearframe(f)
         global companySymbol
         companySymbol = stockOverview['Symbol']
@@ -78,22 +80,24 @@ def enterStock(stock):
         Label(g, text="Sector: " + stockOverview['Sector']).pack()
         Label(g, text="Industry: " + stockOverview['Industry']).pack()
         Label(g, text="Market Cap: " + '${:,.0f}'.format(float(stockOverview['MarketCapitalization']))).pack()
-        Label(g, text="").pack()
+        Label(p, text="Current Price: " + '${:,.2f}'.format(yf.Ticker(stock).history(period='1d').Close[0])).pack()
+        Label(p, text="").pack()
         g.pack()
+        p.pack()
     except:
         messagebox.showinfo(title="Invalid Input",message="Company Not Found.").pack()
     else:
-        infoChoice() 
+        infoChoice()
 
 #Creates an OptionMenu so the user may choose from News, Ratio Analyses, and Price Comparisons for the entered stock.
 def infoChoice():
-    Label(g, text="What information would you like to see?").pack()
+    Label(p, text="What information would you like to see?").pack()
     var = StringVar(g)
     var.set("News")
-    choices = OptionMenu(g, var, "News", "Ratio Analysis", "Compare Prices")
+    choices = OptionMenu(p, var, "News", "Ratio Analysis", "Compare Prices", "Watchlist")
     choices.pack()
-    Button(g, text="ENTER",command=lambda: getInfo(var.get()), cursor="hand2").pack()
-    Label(g,text="").pack()
+    Button(p, text="ENTER",command=lambda: getInfo(var.get()), cursor="hand2").pack()
+    Label(p,text="").pack()
 
 #Takes the infoChoice() choice and calls the corresponding function.
 def getInfo(v):
@@ -102,8 +106,10 @@ def getInfo(v):
         getPageCount()
     elif v == "Ratio Analysis":
         ratioAnalysis()
-    else:
+    elif v == "Compare Prices":
         getTimespan()
+    else:
+        getWatchlist()
     f.pack()
 
 #Begins the process of obtaining news articles by calculating the pages needed to display the articles (5 articles per page)
@@ -266,6 +272,46 @@ def makeGraph(df):
     a.set_title("Stock Price History: " + companyName + " and Comparable Firms")
     a.set_ylabel("Price at Close (USD)")
 
+#Display function for the watchlist
+def getWatchlist():
+    clearframe(f)
+    Button(f, text="Clear Watchlist", command=lambda: clearList(), cursor="hand2").pack()
+    Label(f,text="").pack()
+    if companySymbol not in watchlist:
+        Button(f, text="Add "+companySymbol+" to your watchlist",command=lambda: addToList() , cursor="hand2").pack()
+    else:
+        Label(f,text="").pack()
+    if len(watchlist) == 0:
+        Label(f,text="Watchlist is empty.").pack()
+    else:
+        priceTable()
+
+#Empties the watchlist
+def clearList():
+    watchlist.clear()
+    getWatchlist()
+
+#Adds entered stock to the watchlist
+def addToList():
+    watchlist.append(companySymbol)
+    getWatchlist()
+
+#Constructs the DataFrame with watchlist tickers and prices
+def priceTable():
+    prices = []
+    for ticker in watchlist:
+        prices.append([ticker, '${:,.2f}'.format(yf.Ticker(ticker).history(period='1d').Close[0])])
+    pricedf = pd.DataFrame(prices,columns=['Security','Price'])
+    makeWatchlist(pricedf)
+
+#Makes the watchlist pandastable to pack onto the GUI
+def makeWatchlist(pricedf):
+    Label(f, text="Your Watchlist").pack()
+    temp = Frame(f)
+    temp.pack()
+    tbl = Table(temp, dataframe=pricedf, editable=False,width=170)
+    tbl.autoResizeColumns()
+    tbl.show()
 
 #Main Application____________________________________________________________________________________________________________________
 win = Tk()
@@ -278,9 +324,14 @@ ticker = Entry(win)
 ticker.pack()
 stockbutton = Button(win,text="ENTER",command=lambda: enterStock(ticker.get().upper()), cursor="hand2")
 stockbutton.pack()
+global watchlist
+watchlist=[]
 
 #Frame for General Stock Overview and Information Dropdown Menu
 g = Frame(win)
+
+#Live Price Frame
+p = Frame(win)
 
 #Frame for specific information selected by dropdown menu
 f = Frame(win)
