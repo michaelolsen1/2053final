@@ -346,6 +346,8 @@ ticker = Entry(win)
 ticker.pack()
 stockbutton = Button(win,text="ENTER",command=lambda: [enterStock(ticker.get().upper())], cursor="hand2")
 stockbutton.pack()
+
+
 global watchlist
 watchlist=[]
 
@@ -359,3 +361,4 @@ p = Frame(win)
 f = Frame(win)
 
 win.mainloop()
+
