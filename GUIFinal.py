@@ -1,6 +1,6 @@
 #Michael Olsen, Elizabeth Borao, Lam Dinh 
 #Platform Based Computing 
-#Final Exam
+#Final Project
 
 #Import Statements___________________________________________________________________________________________________________________
 import requests
@@ -49,7 +49,6 @@ def getURLdata(url,options=''):
         data = response.json()
         return data
     except:
-        #print("API call was not successful.") #Commented out for appearance to user.
         return None
 
 #Formats API URLs that contain the company stock symbol within the URL instead of within the options
